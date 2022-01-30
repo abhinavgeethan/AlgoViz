@@ -28,7 +28,7 @@ function deEnum(enumedArray) {
   }
   return ret
 }
-export default function bubble() {
+export default function merge() {
   const [values, setValues] = useState([])
   const [resetState, setResetState] = useState([])
   const { theme, resolvedTheme } = useTheme()
@@ -72,15 +72,15 @@ export default function bubble() {
     // Show Completed State
     // setStopAnimation(false)
   }
-  // function sortValues() {
-  //   const m = new MergeSorter()
-  //   const sortingAnimations = m.sortMerge(enumArray(values.slice()))
-  //   handleAnimations(sortingAnimations)
-  // }
   function sortValues() {
-    const sortingAnimations = sortBubble(enumArray(values.slice()))
+    const m = new MergeSorter()
+    const sortingAnimations = m.sortMerge(enumArray(values.slice()))
     handleAnimations(sortingAnimations)
   }
+  // function sortValues() {
+  //   const sortingAnimations = sortBubble(enumArray(values.slice()))
+  //   handleAnimations(sortingAnimations)
+  // }
   function resetValues() {
     setValues(resetState)
   }
@@ -98,7 +98,7 @@ export default function bubble() {
   return (
     <>
       <div className="mt-4 text-center">
-        <PageTitle>Bubble Sort</PageTitle>
+        <PageTitle>Merge Sort</PageTitle>
         <div className="w-full h-auto flex flex-row justify-around items-end">
           {values &&
             values.map((v, idx) => {

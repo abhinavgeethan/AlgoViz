@@ -1,8 +1,8 @@
 import PageTitle from '@/components/PageTitle'
-import GraphButtons from '@/components/graph/GraphButtons'
+import GraphButtons from '@/components/linkedlist/GraphButtons'
 import React, { createRef, useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { GraphNode, Graph, getRandomInt } from '@/components/graph/Algorithms.ts'
+import { ListNode, LinkedList } from '@/components/linkedlist/Algorithms.ts'
 
 const VISITED_COLOR = 'red'
 const VISITED_COLOR_DARK = 'red'
@@ -13,29 +13,33 @@ const PARENT_COLOR_DARK = 'yellow'
 
 // const ANIMATION_SPEED_OFFSET = 1
 
-export default function djikstras() {
+export default function cycleDetection() {
   const { theme, resolvedTheme } = useTheme()
   const [animations, setAnimations] = useState([])
   const [nodeStrIdx, setNodeStrIdx] = useState([])
   const [errorState, setErrorState] = useState(false)
   let playAnimation = false
+  let stepMode = false
   const [edges, setEdges] = useState([])
   let node
+  const N = 5
   function handlePlay() {
     playAnimation = true
     console.log('Playing')
   }
+  function handleStep() {
+    if (!stepMode) stepMode = true
+    handlePlay()
+  }
   let Sketch = (p) => {
     // Setup
-    const N = 5
     let nodeArray = []
     let nodeLocations = []
     let edgePaths = []
-    // let edgeWeights = edges.map((e) => e[2])
-    // let visited = []
+    let prevSlowNode = null
+    let prevFastNode = null
     let selectedNode = null
     let animCtr = 0
-    let foundParents = false
     const NODE_RADIUS = 42
     class Node {
       constructor(x, y, value) {
@@ -46,9 +50,12 @@ export default function djikstras() {
         this.fillColor = 255
         this.textColor = 0
       }
-      setColors(visited, current) {
-        if (visited) this.strokeColor = p.color(236, 62, 50)
-        if (current) this.strokeColor = p.color(169, 253, 172)
+      // setColors(visited, current) {
+      //   if (visited) this.strokeColor = p.color(236, 62, 50)
+      //   if (current) this.strokeColor = p.color(169, 253, 172)
+      // }
+      resetStroke() {
+        this.strokeColor = p.color(118, 129, 142)
       }
       show() {
         p.strokeWeight(5)
@@ -136,13 +143,20 @@ export default function djikstras() {
         // edgeWeights.push(p.random(1, 10))
         // visited.push(false)
       }
-      console.log(animations)
-      for (var e = 0; e < edges.length; e++) {
-        let n1 = getNode(edges[e][0])
-        let n2 = getNode(edges[e][1])
-        edgePaths.push([n1, n2, edges[e][2], p.color(11, 5, 0)])
+      // console.log(animations)
+      for (var n = 0; n < nodeArray.length - 1; n++) {
+        let n1 = nodeArray[n]
+        let n2 = nodeArray[n + 1]
+        edgePaths.push([n1, n2, 5, p.color(11, 5, 0)])
       }
-      p.frameRate(5)
+      edgePaths.push([getNode(edges[0]), getNode(edges[1]), 5, p.color(11, 5, 0)])
+      console.log('Edge Paths', edgePaths)
+      // for (var e = 0; e < edges.length; e++) {
+      //   let n1 = getNode(edges[e][0])
+      //   let n2 = getNode(edges[e][1])
+      //   edgePaths.push([n1, n2, edges[e][2], p.color(11, 5, 0)])
+      // }
+      p.frameRate(2)
     }
     // Anim
     function resetDraw() {
@@ -173,38 +187,40 @@ export default function djikstras() {
       return retNode
     }
     function handleAnimations(animation) {
-      if (animation[1] === 'parent') {
-        console.log('Parents Found')
+      if (animation[1] === 'cyclePath') {
+        console.log('Path Found')
         let splitString = animation[0].split(/(\s+)/)
         console.log(splitString)
         console.log(edgePaths)
-        let parentNode = getNode(splitString[0])
-        let childNode = getNode(splitString[2])
-        if (parentNode === undefined || childNode === undefined) {
-          console.log('Umm')
-          return
+        let pathNodes = []
+        for (var i = 0; i < splitString.length; i += 2) {
+          pathNodes.push(getNode(splitString[i]))
         }
-        // Resetting Nodes
-        if (!foundParents) {
-          for (const n of nodeArray) {
-            n.strokeColor = p.color(118, 129, 142)
-          }
+        for (const n of nodeArray) {
+          n.strokeColor = p.color(118, 129, 142)
         }
-        parentNode.strokeColor = p.color(169, 253, 172)
-        childNode.strokeColor = p.color(169, 253, 172)
-        let index = edgePaths.findIndex((e) => e[0] === parentNode && e[1] === childNode)
-        edgePaths[index][3] = p.color(169, 253, 172)
-        foundParents = true
+        // }
+        for (var j = 0; j < pathNodes.length - 1; j++) {
+          pathNodes[j].strokeColor = p.color(169, 253, 172)
+          pathNodes[j + 1].strokeColor = p.color(169, 253, 172)
+          let index = edgePaths.findIndex((e) => e[0] === pathNodes[j + 1] && e[1] === pathNodes[j])
+          edgePaths[index][3] = p.color(169, 253, 172)
+        }
+        p.noLoop()
       } else {
         let drawNode = getNode(animation[0])
         if (drawNode === undefined) {
           console.log('Umm')
           return
         }
-        if (animation[1] === 'current') {
+        if (animation[1] === 'slow') {
+          if (prevSlowNode !== null) prevSlowNode.resetStroke()
           drawNode.strokeColor = p.color(236, 62, 50)
-        } else if (animation[1] === 'visited') {
+          prevSlowNode = drawNode
+        } else if (animation[1] === 'fast') {
+          if (prevFastNode !== null) prevFastNode.resetStroke()
           drawNode.strokeColor = p.color(169, 253, 172)
+          prevFastNode = drawNode
         }
       }
     }
@@ -228,11 +244,11 @@ export default function djikstras() {
     }
     p.draw = () => {
       p.background(220)
-      console.log(playAnimation)
       if (playAnimation) {
         handleAnimations(animations[animCtr])
         animCtr++
         if (animCtr > animations.length - 1) p.noLoop()
+        if (stepMode) playAnimation = false
       }
       for (var x = 0; x < edgePaths.length; x++) {
         drawPath(
@@ -256,61 +272,34 @@ export default function djikstras() {
     }
   }
   useEffect(() => {
-    let A = new GraphNode('A')
-    let B = new GraphNode('B')
-    let C = new GraphNode('C')
-    let D = new GraphNode('D')
-    let E = new GraphNode('E')
-    let graphNodeArray = [A, B, C, D, E]
-    //     // for (var a = 0; a < 5; a++) {
-    //     //   let g = new GraphNode(String.fromCharCode(65 + a))
-    //     //   graphNodeArray.push(g)
-    //     // }
-    let validGraph = false
-    let graphEdges = []
-    let graphAnimations = []
-    let graphDistances = []
-    let ctr = 0
-    while (!validGraph && ctr < 10) {
-      const G = new Graph(graphNodeArray)
-      graphEdges = G.makeAllEdges()
-      try {
-        let animOP = G.getAnimations(graphNodeArray[0].idx, graphNodeArray[2].idx)
-        graphDistances = animOP[0]
-        graphAnimations = animOP[1]
-        validGraph = true
-      } catch {
-        validGraph = false
-      }
-      ctr++
+    let A = new ListNode('A')
+    const L = new LinkedList(A)
+    let strIdx = ['A']
+    for (var i = 1; i < N; i++) {
+      let nodeVal = String.fromCharCode(65 + i)
+      L.newNode(nodeVal)
+      strIdx.push(nodeVal)
     }
-    // G.addEdge(A, B, 6)
-    // G.addEdge(A, D, 1)
-    // G.addEdge(B, C, 5)
-    // G.addEdge(B, E, 2)
-    // G.addEdge(D, B, 2)
-    // G.addEdge(D, E, 1)
-    // G.addEdge(E, C, 5)
-    // console.log(graphAnimations)
-    if (validGraph && ctr < 11) {
-      setAnimations(graphAnimations)
-      setEdges(graphEdges)
-      setNodeStrIdx(Object.keys(graphDistances))
+    setNodeStrIdx(strIdx)
+    let cycleNodes = L.makeCyclic()
+    setEdges(cycleNodes)
+    let animOP = L.getCycleDetectionAnimations()
+    console.log(animOP)
+    if (animOP !== undefined) {
+      setAnimations(animOP)
       node = document.createElement('div')
+      node.id = 'node'
       document.getElementsByClassName('p5JS')[0].appendChild(node)
-    } else {
-      setErrorState(true)
-    }
+    } else setErrorState(true)
   }, [])
   useEffect(() => {
     if (
       !errorState &&
-      animations[0] !== undefined &&
-      edges[0] !== undefined &&
-      nodeStrIdx[0] !== undefined
+      animations[0] !== undefined
+      // edges[0] !== undefined &&
+      // nodeStrIdx[0] !== undefined
     ) {
       // P5 Setup
-      console.log(nodeStrIdx)
       const p5 = require('p5')
       const myp5 = new p5(Sketch, node)
     }
@@ -318,13 +307,13 @@ export default function djikstras() {
   return (
     <>
       <div className="mt-4 text-center">
-        <PageTitle>Djikstras Algorithm</PageTitle>
+        <PageTitle>Floyd's Cycle Detection Algorithm</PageTitle>
         <div>{errorState && <p>Error, try refreshing</p>}</div>
-        {/* <div>{!errorState && animations.map((a) => <p>{a[0]}</p>)}</div> */}
         <div className="w-full h-auto flex flex-row justify-around items-end p5JS"></div>
         <GraphButtons
           callSort={handlePlay}
           fillNewValues={() => window.location.reload()}
+          stepSort={handleStep}
           // resetValues={resetDraw}
         ></GraphButtons>
       </div>

@@ -117,25 +117,3 @@ export class Graph {
     return [distFromStart, parent]
   }
 }
-
-// let A = new GraphNode('A')
-// let B = new GraphNode('B')
-// let C = new GraphNode('C')
-// let D = new GraphNode('D')
-// let E = new GraphNode('E')
-// let nodeArray = [A, B, C, D, E]
-// let G = new Graph(nodeArray)
-// G.addEdge(A, B, 6)
-// G.addEdge(A, D, 1)
-// G.addEdge(B, C, 5)
-// G.addEdge(B, E, 2)
-// G.addEdge(D, B, 2)
-// G.addEdge(D, E, 1)
-// G.addEdge(E, C, 5)
-// let [distObj, parent] = djikstras(G, A)
-// let k = Object.keys(distObj)
-// console.log('Result')
-// for (var i = 0; i < k.length; i++) {
-//   if (i > 0) console.log(k[i], distObj[k[i]], parent[k[i]].idx)
-//   else console.log(k[i], distObj[k[i]])
-// }
