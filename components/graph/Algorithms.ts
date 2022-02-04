@@ -31,14 +31,14 @@ export class Graph {
     if (this.nodes.length <= 1) return []
     let ret: Array<[string, string, number]> = []
     for (var i = 0; i < this.nodes.length + 2; i++) {
-      let i1: number = getRandomInt(0, this.nodes.length - 1)
+      let i1: number = getRandomInt(0, this.nodes.length)
       let i2: number = i1
       while (i2 === i1) {
-        i2 = getRandomInt(0, this.nodes.length - 1)
+        i2 = getRandomInt(0, this.nodes.length)
       }
       let n1: GraphNode = this.nodes[i1]
       let n2: GraphNode = this.nodes[i2]
-      let wt: number = getRandomInt(1, 10)
+      let wt: number = getRandomInt(4, 11)
       this.addEdge(n1, n2, wt)
       ret.push([n1.idx, n2.idx, wt])
     }
@@ -115,5 +115,34 @@ export class Graph {
       unvisited.splice(unvisited.indexOf(curNode), 1)
     }
     return [distFromStart, parent]
+  }
+  dfs(node: GraphNode, visitedArray: GraphNode[], target: GraphNode) {
+    visitedArray.push(node)
+    if (node === target) {
+      return true
+    }
+    for (const nbr of node.neighbours) {
+      if (!visitedArray.includes(nbr)) {
+        if (this.dfs(nbr, visitedArray, target)) return true
+      }
+    }
+  }
+  callDFS(startNode: GraphNode, endNode: GraphNode) {
+    let visited: GraphNode[] = []
+    this.dfs(startNode, visited, endNode)
+  }
+  bfs(startNode: GraphNode, endNode: GraphNode) {
+    let visited: GraphNode[] = [startNode]
+    let q: GraphNode[] = [startNode]
+    while (q.length !== 0) {
+      let node: GraphNode = q.shift()
+      if (node === endNode) return
+      for (const nbr of node.neighbours) {
+        if (!visited.includes(nbr)) {
+          q.push(nbr)
+          visited.push(nbr)
+        }
+      }
+    }
   }
 }

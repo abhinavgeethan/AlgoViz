@@ -1,38 +1,32 @@
 import PageTitle from '@/components/PageTitle'
 import GraphButtons from '@/components/graph/GraphButtons'
-import React, { createRef, useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { GraphNode, Graph, getRandomInt } from '@/components/graph/Algorithms.ts'
-
-const VISITED_COLOR = 'red'
-const VISITED_COLOR_DARK = 'red'
-const CURRENT_COLOR = 'rgb(64,64,64,1)'
-const CURRENT_COLOR_DARK = 'white'
-const PARENT_COLOR = 'yellow'
-const PARENT_COLOR_DARK = 'yellow'
-
-// const ANIMATION_SPEED_OFFSET = 1
+import { GraphNode, Graph } from '@/components/graph/Algorithms.ts'
+import { makeLocations, getRandomIndices } from '@/lib/utils/sketchUtils.ts'
 
 export default function djikstras() {
   const { theme, resolvedTheme } = useTheme()
   const [animations, setAnimations] = useState([])
   const [nodeStrIdx, setNodeStrIdx] = useState([])
   const [errorState, setErrorState] = useState(false)
-  let playAnimation = false
   const [edges, setEdges] = useState([])
-  let node
+  let playAnimation = false
+  let animationSpeed = 1
+  let canvasDiv = useRef(null)
   function handlePlay() {
     playAnimation = true
     console.log('Playing')
   }
+  function handleChangeSpeed(value) {
+    animationSpeed = value
+  }
   let Sketch = (p) => {
     // Setup
-    const N = 5
+    const N = 6
     let nodeArray = []
     let nodeLocations = []
     let edgePaths = []
-    // let edgeWeights = edges.map((e) => e[2])
-    // let visited = []
     let selectedNode = null
     let animCtr = 0
     let foundParents = false
@@ -66,75 +60,79 @@ export default function djikstras() {
         this.y = y
       }
     }
+    // function makeCircles() {
+    //   let ctr = 1
+    //   while (ctr < N) {
+    //     console.log('Found:', nodeLocations.length)
+    //     let pX = nodeLocations[ctr - 1][0]
+    //     let pY = nodeLocations[ctr - 1][1]
+    //     let r = NODE_RADIUS
+    //     if (pY + 5 * r < p.height - 20 && pY - 5 * r > 20) {
+    //       for (var x = pX - 4 * r; x <= pX + 4 * r; x++) {
+    //         let c1 = x - (r + 10) < 0
+    //         let c2 = x + (r + 10) > p.width - 20
+    //         if (c1 || c2) continue
+    //         let y = p.ceil(p.sqrt(4 * r * (4 * r) - (x - pX) * (x - pX)) + pY)
+    //         let c3 = y - (r + 10) < 0
+    //         let c4 = y + (r + 10) > p.height - 20
+    //         if (c3 || c4) continue
+    //         let valid = true
+    //         for (var nIdx = 0; nIdx < nodeLocations.length; nIdx++) {
+    //           let d = p.dist(nodeLocations[nIdx][0], nodeLocations[nIdx][1], x, y)
+    //           if (d < NODE_RADIUS * 4) {
+    //             valid = false
+    //             break
+    //           }
+    //         }
+    //         if (valid) {
+    //           nodeLocations.push([x, y])
+    //           //   console.log('Added', x, y)
+    //           ctr++
+    //           break
+    //         }
+    //       }
+    //     } else {
+    //       for (var y = pY - 4 * r; y <= pY + 4 * r; y++) {
+    //         let c1 = y - (r + 10) < 0
+    //         let c2 = y + (r + 10) > p.height - 20
+    //         if (c1 || c2) continue
+    //         let x = p.ceil(p.sqrt(4 * r * (4 * r) - (y - pY) * (y - pY)) + pX)
+    //         let c3 = x - (r + 10) < 0
+    //         let c4 = x + (r + 10) > p.width - 20
+    //         if (c3 || c4) continue
+    //         let valid = true
+    //         for (var nIdx = 0; nIdx < nodeLocations.length; nIdx++) {
+    //           let d = p.dist(nodeLocations[nIdx][0], nodeLocations[nIdx][1], x, y)
+    //           if (d < NODE_RADIUS * 4) {
+    //             valid = false
+    //             break
+    //           }
+    //         }
+    //         if (valid) {
+    //           nodeLocations.push([x, y])
+    //           //   console.log('Added', x, y)
+    //           ctr++
+    //           break
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
     function makeCircles() {
-      let ctr = 1
-      while (ctr < N) {
-        console.log('Found:', nodeLocations.length)
-        let pX = nodeLocations[ctr - 1][0]
-        let pY = nodeLocations[ctr - 1][1]
-        let r = NODE_RADIUS
-        if (pY + 5 * r < p.height - 20 && pY - 5 * r > 20) {
-          for (var x = pX - 4 * r; x <= pX + 4 * r; x++) {
-            let c1 = x - (r + 10) < 0
-            let c2 = x + (r + 10) > p.width - 20
-            if (c1 || c2) continue
-            let y = p.ceil(p.sqrt(4 * r * (4 * r) - (x - pX) * (x - pX)) + pY)
-            let c3 = y - (r + 10) < 0
-            let c4 = y + (r + 10) > p.height - 20
-            if (c3 || c4) continue
-            let valid = true
-            for (var nIdx = 0; nIdx < nodeLocations.length; nIdx++) {
-              let d = p.dist(nodeLocations[nIdx][0], nodeLocations[nIdx][1], x, y)
-              if (d < NODE_RADIUS * 4) {
-                valid = false
-                break
-              }
-            }
-            if (valid) {
-              nodeLocations.push([x, y])
-              //   console.log('Added', x, y)
-              ctr++
-              break
-            }
-          }
-        } else {
-          for (var y = pY - 4 * r; y <= pY + 4 * r; y++) {
-            let c1 = y - (r + 10) < 0
-            let c2 = y + (r + 10) > p.height - 20
-            if (c1 || c2) continue
-            let x = p.ceil(p.sqrt(4 * r * (4 * r) - (y - pY) * (y - pY)) + pX)
-            let c3 = x - (r + 10) < 0
-            let c4 = x + (r + 10) > p.width - 20
-            if (c3 || c4) continue
-            let valid = true
-            for (var nIdx = 0; nIdx < nodeLocations.length; nIdx++) {
-              let d = p.dist(nodeLocations[nIdx][0], nodeLocations[nIdx][1], x, y)
-              if (d < NODE_RADIUS * 4) {
-                valid = false
-                break
-              }
-            }
-            if (valid) {
-              nodeLocations.push([x, y])
-              //   console.log('Added', x, y)
-              ctr++
-              break
-            }
-          }
-        }
-      }
+      nodeLocations = makeLocations(N, NODE_RADIUS, p.width, p.height)
     }
     p.setup = () => {
       p.createCanvas(1080, 600)
-      nodeLocations.push([
-        p.floor(p.random(500 + 30 + NODE_RADIUS, p.width * 0.2)),
-        p.floor(p.random(300 + 30 + NODE_RADIUS, p.height * 0.2)),
-      ])
       makeCircles()
+      if (nodeLocations.length === undefined || nodeLocations.length < N) {
+        p.noLoop()
+        p.noCanvas()
+        return
+      }
+      let indices = getRandomIndices(N, nodeLocations.length)
       for (var n = 0; n < N; n++) {
-        nodeArray.push(new Node(nodeLocations[n][0], nodeLocations[n][1], nodeStrIdx[n]))
-        // edgeWeights.push(p.random(1, 10))
-        // visited.push(false)
+        let pos = nodeLocations[indices[n]]
+        nodeArray.push(new Node(pos[0], pos[1], nodeStrIdx[n]))
       }
       console.log(animations)
       for (var e = 0; e < edges.length; e++) {
@@ -163,8 +161,8 @@ export default function djikstras() {
     function selectNode(x, y) {
       let shortD = Infinity
       let retNode = null
-      for (var i = 0; i < nodeLocations.length; i++) {
-        let d = p.dist(x, y, nodeLocations[i][0], nodeLocations[i][1])
+      for (var i = 0; i < nodeArray.length; i++) {
+        let d = p.dist(x, y, nodeArray[i].x, nodeArray[i].y)
         if (d < shortD) {
           shortD = d
           retNode = nodeArray[i]
@@ -228,11 +226,15 @@ export default function djikstras() {
     }
     p.draw = () => {
       p.background(220)
-      console.log(playAnimation)
       if (playAnimation) {
-        handleAnimations(animations[animCtr])
-        animCtr++
-        if (animCtr > animations.length - 1) p.noLoop()
+        for (var i = 0; i < animationSpeed; i++) {
+          handleAnimations(animations[animCtr])
+          animCtr++
+          if (animCtr > animations.length - 1) {
+            p.noLoop()
+            break
+          }
+        }
       }
       for (var x = 0; x < edgePaths.length; x++) {
         drawPath(
@@ -255,13 +257,20 @@ export default function djikstras() {
       p.strokeWeight(0)
     }
   }
+  function handleReset() {
+    canvasDiv.current.innerHTML = ''
+    playAnimation = false
+    const p5 = require('p5')
+    const myp5 = new p5(Sketch, canvasDiv.current)
+  }
   useEffect(() => {
     let A = new GraphNode('A')
     let B = new GraphNode('B')
     let C = new GraphNode('C')
     let D = new GraphNode('D')
     let E = new GraphNode('E')
-    let graphNodeArray = [A, B, C, D, E]
+    let F = new GraphNode('F')
+    let graphNodeArray = [A, B, C, D, E, F]
     //     // for (var a = 0; a < 5; a++) {
     //     //   let g = new GraphNode(String.fromCharCode(65 + a))
     //     //   graphNodeArray.push(g)
@@ -275,7 +284,7 @@ export default function djikstras() {
       const G = new Graph(graphNodeArray)
       graphEdges = G.makeAllEdges()
       try {
-        let animOP = G.getAnimations(graphNodeArray[0].idx, graphNodeArray[2].idx)
+        let animOP = G.getAnimations(graphNodeArray[0].idx, graphNodeArray[3].idx)
         graphDistances = animOP[0]
         graphAnimations = animOP[1]
         validGraph = true
@@ -284,20 +293,10 @@ export default function djikstras() {
       }
       ctr++
     }
-    // G.addEdge(A, B, 6)
-    // G.addEdge(A, D, 1)
-    // G.addEdge(B, C, 5)
-    // G.addEdge(B, E, 2)
-    // G.addEdge(D, B, 2)
-    // G.addEdge(D, E, 1)
-    // G.addEdge(E, C, 5)
-    // console.log(graphAnimations)
     if (validGraph && ctr < 11) {
       setAnimations(graphAnimations)
       setEdges(graphEdges)
       setNodeStrIdx(Object.keys(graphDistances))
-      node = document.createElement('div')
-      document.getElementsByClassName('p5JS')[0].appendChild(node)
     } else {
       setErrorState(true)
     }
@@ -312,7 +311,7 @@ export default function djikstras() {
       // P5 Setup
       console.log(nodeStrIdx)
       const p5 = require('p5')
-      const myp5 = new p5(Sketch, node)
+      const myp5 = new p5(Sketch, canvasDiv.current)
     }
   }, [animations])
   return (
@@ -320,12 +319,14 @@ export default function djikstras() {
       <div className="mt-4 text-center">
         <PageTitle>Djikstras Algorithm</PageTitle>
         <div>{errorState && <p>Error, try refreshing</p>}</div>
-        {/* <div>{!errorState && animations.map((a) => <p>{a[0]}</p>)}</div> */}
-        <div className="w-full h-auto flex flex-row justify-around items-end p5JS"></div>
+        <div className="w-full h-auto flex flex-row justify-around items-end p5JS">
+          <div ref={canvasDiv}></div>
+        </div>
         <GraphButtons
           callSort={handlePlay}
           fillNewValues={() => window.location.reload()}
-          // resetValues={resetDraw}
+          changeSpeed={handleChangeSpeed}
+          resetValues={handleReset}
         ></GraphButtons>
       </div>
     </>

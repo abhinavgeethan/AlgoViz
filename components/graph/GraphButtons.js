@@ -42,10 +42,10 @@ export default function SortButtons({ fillNewValues, callSort, resetValues, chan
           <input
             name={'speedSlider'}
             type={'range'}
-            max={'50'}
-            min={'0.5'}
+            max={'3'}
+            min={'1'}
             defaultValue={'1'}
-            step={'0.5'}
+            step={'1'}
             onChange={handleChangeSpeed}
             className="range range-primary"
           ></input>
