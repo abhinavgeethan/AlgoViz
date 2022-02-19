@@ -37,3 +37,4 @@ yarn-error.log*
 .env.example
 palette.scss
 palette.txt
+components/minimax copy.ts
