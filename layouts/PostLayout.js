@@ -59,6 +59,7 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
                           width="38px"
                           height="38px"
                           alt="avatar"
+                          loader="imgix"
                           className="w-10 h-10 rounded-full"
                         />
                       )}
