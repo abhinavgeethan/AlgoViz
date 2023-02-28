@@ -64,6 +64,15 @@ if (isGithubActions) {
   basePath = `/${repo}`
 }
 
+module.exports = {
+  assetPrefix: assetPrefix,
+  basePath: basePath,
+  images: {
+    loader: 'imgix',
+    path: 'the "domain" of your Imigix source',
+  },
+}
+
 module.exports = withBundleAnalyzer({
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'md', 'mdx'],
